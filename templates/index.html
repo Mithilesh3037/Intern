@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Expense Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="{{ url_for('index') }}" class="brand"><i class="fa-solid fa-wallet"></i> PersonalExpenseTracker</a>
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">Home</a>
+                <a href="{{ url_for('add_expense') }}">Add Expense</a>
+                <a href="{{ url_for('expenses') }}">Expenses</a>
+                <a href="{{ url_for('summary') }}">Summary</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container page">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section class="hero">
+            <div>
+                <h1>Track your spending with confidence</h1>
+                <p>Stay on top of your finances with a simple and modern expense tracker.</p>
+                <a href="{{ url_for('add_expense') }}" class="btn btn-primary">Add New Expense</a>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+                <h3>Total Expenses</h3>
+                <p>${{ "%.2f"|format(total_expenses) }}</p>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-tags"></i></div>
+                <h3>Total Categories</h3>
+                <p>{{ total_categories }}</p>
+            </div>
+            <div class="card">
+                <div class="card-icon"><i class="fa-solid fa-calendar-alt"></i></div>
+                <h3>Monthly Expense</h3>
+                <p>${{ "%.2f"|format(monthly_expense) }}</p>
+            </div>
+        </section>
+
+        <section class="quick-links">
+            <a href="{{ url_for('add_expense') }}" class="quick-card">
+                <i class="fa-solid fa-plus"></i>
+                <h4>Add Expense</h4>
+            </a>
+            <a href="{{ url_for('expenses') }}" class="quick-card">
+                <i class="fa-solid fa-list"></i>
+                <h4>View Expenses</h4>
+            </a>
+            <a href="{{ url_for('summary') }}" class="quick-card">
+                <i class="fa-solid fa-chart-pie"></i>
+                <h4>Summary</h4>
+            </a>
+        </section>
+
+        <section class="card">
+            <div class="section-title">
+                <h2>Recent Expenses</h2>
+            </div>
+            {% if recent_expenses %}
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for expense in recent_expenses %}
+                    <tr>
+                        <td>{{ expense.title }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>${{ "%.2f"|format(expense.amount) }}</td>
+                        <td>{{ expense.expense_date }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="empty-state">No expenses recorded yet. Start by adding one.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
