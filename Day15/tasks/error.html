@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}{{ code or 'Error' }} — CartSense{% endblock %}
+{% block breadcrumb %}Error{% endblock %}
+
+{% block content %}
+<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;text-align:center;">
+  <div style="font-size:5rem;font-weight:900;color:var(--border-hi);line-height:1;margin-bottom:16px;">{{ code or '?' }}</div>
+  <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:10px;">{{ message or 'Something went wrong' }}</h1>
+  <p style="color:var(--text-muted);font-size:.88rem;margin-bottom:28px;max-width:400px;">
+    {{ message or 'An unexpected error occurred. Please try again or return to the dashboard.' }}
+  </p>
+  <div class="flex gap-2">
+    <a href="{{ url_for('landing') }}" class="btn btn-primary"><i class="fas fa-house"></i> Go Home</a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary"><i class="fas fa-chart-pie"></i> Dashboard</a>
+  </div>
+</div>
+{% endblock %}

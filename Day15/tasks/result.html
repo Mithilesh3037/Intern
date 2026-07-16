@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}Churn Prediction Result — {{ customer.name }}{% endblock %}
+{% block breadcrumb %}Prediction Result{% endblock %}
+
+{% block extra_css %}
+<style>
+.result-layout { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+.ring-wrap { display:flex; flex-direction:column; align-items:center; gap:10px; padding: 24px 0; }
+.ring-svg { transform:rotate(-90deg); }
+.ring-track { fill:none; stroke: var(--bg3); stroke-width:10; }
+.ring-fill  { fill:none; stroke-width:10; stroke-linecap:round; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+.ring-center { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+.ring-wrap-inner { position:relative; display:inline-block; }
+.ring-pct  { font-size:2rem; font-weight:900; }
+.ring-sub  { font-size:.72rem; color:var(--text-muted); }
+.feat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.feat-item { background:var(--bg3); border:1px solid var(--border); border-radius:6px; padding:10px 12px; }
+.feat-item-lbl { font-size:.65rem; color:var(--text-dim); margin-bottom:3px; }
+.feat-item-val { font-size:.9rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+@media(max-width:900px){ .result-layout{grid-template-columns:1fr;} .feat-grid{grid-template-columns:repeat(2,1fr);} }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set is_churn = customer.prediction == 1 %}
+{% set risk = customer.risk_level or 'Low' %}
+
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1 class="page-title">Prediction Result</h1>
+    <p class="page-subtitle">Customer: <strong>{{ customer.name }}</strong> &mdash; {{ customer.email }}</p>
+  </div>
+  <div class="flex gap-2">
+    <a href="{{ url_for('edit_customer', cid=customer.id) }}" class="btn btn-secondary btn-sm">
+      <i class="fas fa-pen"></i> Edit
+    </a>
+    <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm">
+      <i class="fas fa-plus"></i> New Prediction
+    </a>
+  </div>
+</div>
+
+<div class="result-layout">
+  <!-- Left column -->
+  <div>
+    <!-- Verdict Banner -->
+    <div class="result-banner {{ 'churn' if is_churn else 'retain' }} animate-scale-in">
+      <div class="flex items-center gap-20">
+        <div>
+          <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:6px;">
+            Churn Prediction Verdict
+          </div>
+          <div class="result-verdict {{ 'churn' if is_churn else 'retain' }}">
+            {% if is_churn %}
+              <i class="fas fa-triangle-exclamation"></i> Likely to Churn
+            {% else %}
+              <i class="fas fa-circle-check"></i> Likely to Retain
+            {% endif %}
+          </div>
+          <div class="result-sub mt-1">
+            Risk Level:
+            <span class="badge badge-{{ risk|lower }}">{{ risk }} Risk</span>
+            &nbsp; Recorded: {{ customer.updated_at[:16] if customer.updated_at else 'Now' }}
+          </div>
+        </div>
+        <div style="margin-left:auto;">
+          <div class="ring-wrap-inner">
+            <svg class="ring-svg" width="120" height="120" viewBox="0 0 120 120">
+              <circle class="ring-track" cx="60" cy="60" r="50"/>
+              <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="50"
+                stroke="{{ '#f43f5e' if is_churn else '#10b981' }}"
+                stroke-dasharray="314.16"
+                stroke-dashoffset="314.16"
+              />
+            </svg>
+            <div class="ring-center">
+              <div class="ring-pct" id="ringPct" data-churn="{{ 'true' if is_churn else 'false' }}">0%</div>
+              <div class="ring-sub">{{ 'Churn' if is_churn else 'Retain' }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prob bars -->
+    <div class="card mb-3 animate-fade-up delay-1">
+      <div class="card-header"><span class="card-title">Probability Breakdown</span></div>
+      <div class="card-body">
+        <div class="mb-3">
+          <div class="flex justify-between mb-2" style="font-size:.82rem;">
+            <span><i class="fas fa-triangle-exclamation text-rose"></i> Churn Probability</span>
+            <strong class="text-rose">{{ customer.churn_probability }}%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill churn" style="width:0%" data-target="{{ customer.churn_probability }}" id="churnBar"></div>
+          </div>
+        </div>
+        <div>
+          <div class="flex justify-between mb-2" style="font-size:.82rem;">
+            <span><i class="fas fa-circle-check text-emerald"></i> Retention Probability</span>
+            <strong class="text-emerald">{{ customer.retain_probability }}%</strong>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill retain" style="width:0%" data-target="{{ customer.retain_probability }}" id="retainBar"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature values -->
+    <div class="card animate-fade-up delay-2">
+      <div class="card-header"><span class="card-title">Input Features Used for Prediction</span></div>
+      <div class="card-body">
+        <div class="feat-grid">
+          {% for feat in features %}
+          <div class="feat-item">
+            <div class="feat-item-lbl">{{ feat.label }}</div>
+            <div class="feat-item-val">{{ customer.get(feat.key, 0) }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right column -->
+  <div>
+    <!-- Customer Card -->
+    <div class="card mb-3 animate-fade-up">
+      <div class="card-header"><span class="card-title">Customer Profile</span></div>
+      <div class="card-body">
+        <div style="font-size:.85rem;display:flex;flex-direction:column;gap:12px;">
+          <div class="flex justify-between">
+            <span class="text-muted">Customer ID</span>
+            <span class="text-mono">#{{ customer.id }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted">Name</span>
+            <strong>{{ customer.name }}</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted">Email</span>
+            <span style="word-break:break-all;">{{ customer.email }}</span>
+          </div>
+          {% if customer.phone %}
+          <div class="flex justify-between">
+            <span class="text-muted">Phone</span>
+            <span>{{ customer.phone }}</span>
+          </div>
+          {% endif %}
+          {% if customer.company %}
+          <div class="flex justify-between">
+            <span class="text-muted">Company</span>
+            <span>{{ customer.company }}</span>
+          </div>
+          {% endif %}
+          <div class="flex justify-between">
+            <span class="text-muted">Segment</span>
+            <span class="badge badge-general">{{ customer.segment or 'General' }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recommended Actions -->
+    <div class="card mb-3 animate-fade-up delay-1">
+      <div class="card-header"><span class="card-title">Recommended Actions</span></div>
+      <div class="card-body">
+        {% if is_churn %}
+        <div style="font-size:.82rem;color:var(--text-muted);display:flex;flex-direction:column;gap:10px;">
+          <div><i class="fas fa-phone text-amber"></i>&nbsp; Schedule immediate retention call</div>
+          <div><i class="fas fa-tag text-amber"></i>&nbsp; Offer personalised discount / loyalty reward</div>
+          <div><i class="fas fa-envelope text-amber"></i>&nbsp; Send re-engagement email campaign</div>
+          <div><i class="fas fa-headset text-amber"></i>&nbsp; Assign dedicated account manager</div>
+          <div><i class="fas fa-chart-line text-amber"></i>&nbsp; Review purchase history for pain points</div>
+        </div>
+        {% else %}
+        <div style="font-size:.82rem;color:var(--text-muted);display:flex;flex-direction:column;gap:10px;">
+          <div><i class="fas fa-star text-emerald"></i>&nbsp; Enrol in loyalty programme</div>
+          <div><i class="fas fa-gift text-emerald"></i>&nbsp; Offer upsell / cross-sell opportunity</div>
+          <div><i class="fas fa-user-check text-emerald"></i>&nbsp; Request testimonial or referral</div>
+          <div><i class="fas fa-calendar text-emerald"></i>&nbsp; Schedule quarterly business review</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card animate-fade-up delay-2">
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+        <a href="{{ url_for('edit_customer', cid=customer.id) }}" class="btn btn-secondary btn-full">
+          <i class="fas fa-pen"></i> Edit Customer Details
+        </a>
+        <a href="{{ url_for('customers_list') }}" class="btn btn-ghost btn-full">
+          <i class="fas fa-users"></i> All Customer Records
+        </a>
+        <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-full">
+          <i class="fas fa-plus"></i> New Prediction
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Pass server data via data attributes — avoids Jinja2-in-JS linter warnings -->
+<div id="resultData"
+  data-churn-prob="{{ customer.churn_probability }}"
+  data-retain-prob="{{ customer.retain_probability }}"
+  data-is-churn="{{ 'true' if is_churn else 'false' }}"
+  style="display:none;"
+></div>
+<script>
+(function () {
+  var el         = document.getElementById('resultData');
+  var churnProb  = parseFloat(el.dataset.churnProb);
+  var retainProb = parseFloat(el.dataset.retainProb);
+  var isChurn    = el.dataset.isChurn === 'true';
+
+  // Colour the ring percentage label
+  var ringPct = document.getElementById('ringPct');
+  ringPct.style.color = isChurn ? 'var(--rose)' : 'var(--emerald)';
+
+  // Animate progress bars
+  setTimeout(function () {
+    document.getElementById('churnBar').style.width  = churnProb  + '%';
+    document.getElementById('retainBar').style.width = retainProb + '%';
+  }, 100);
+
+  // Animate ring
+  var ring = document.getElementById('ringFill');
+  var pct  = isChurn ? churnProb : retainProb;
+  var circumference = 314.16;
+  setTimeout(function () {
+    ring.style.strokeDashoffset = circumference - (pct / 100) * circumference;
+    var current = 0;
+    var step    = pct / 60;
+    var timer   = setInterval(function () {
+      current = Math.min(current + step, pct);
+      ringPct.textContent = Math.round(current) + '%';
+      if (current >= pct) clearInterval(timer);
+    }, 16);
+  }, 200);
+}());
+</script>
+{% endblock %}

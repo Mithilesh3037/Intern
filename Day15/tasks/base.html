@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}CartSense{% endblock %} — Customer Purchase & Churn Predictor</title>
+  <meta name="description" content="CartSense – AI-powered customer churn prediction and analytics platform for modern businesses."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+<!-- Toast container -->
+<div id="toast-container" aria-live="polite"></div>
+
+<!-- Flash messages → toasts -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <script>
+      window.__flashMessages = {{ messages | tojson }};
+    </script>
+  {% endif %}
+{% endwith %}
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <a href="{{ url_for('landing') }}" class="sidebar-logo">
+      <div class="logo-mark">
+        <i class="fas fa-chart-network"></i>
+      </div>
+      <div class="logo-text">
+        <span class="logo-name">CartSense</span>
+        <span class="logo-tagline">AI Analytics</span>
+      </div>
+    </a>
+    <button class="sidebar-close" id="sidebarClose"><i class="fas fa-xmark"></i></button>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Overview</span>
+      <a href="{{ url_for('landing') }}"    class="nav-link {% if request.endpoint=='landing'   %}active{% endif %}">
+        <i class="fas fa-house"></i><span>Home</span>
+      </a>
+      <a href="{{ url_for('about') }}"      class="nav-link {% if request.endpoint=='about'     %}active{% endif %}">
+        <i class="fas fa-circle-info"></i><span>About CartSense</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Prediction</span>
+      <a href="{{ url_for('predict_form') }}" class="nav-link {% if request.endpoint in ['predict_form','predict_submit','result_page'] %}active{% endif %}">
+        <i class="fas fa-brain"></i><span>New Prediction</span>
+        <span class="nav-badge">AI</span>
+      </a>
+      <a href="{{ url_for('history') }}"    class="nav-link {% if request.endpoint=='history'   %}active{% endif %}">
+        <i class="fas fa-clock-rotate-left"></i><span>Prediction History</span>
+      </a>
+    </div>
+
+    <div class="nav-group">
+      <span class="nav-group-label">Analytics</span>
+      <a href="{{ url_for('dashboard') }}"  class="nav-link {% if request.endpoint=='dashboard' %}active{% endif %}">
+        <i class="fas fa-chart-pie"></i><span>Analytics Dashboard</span>
+      </a>
+      <a href="{{ url_for('customers_list') }}" class="nav-link {% if request.endpoint in ['customers_list','edit_customer'] %}active{% endif %}">
+        <i class="fas fa-users"></i><span>Customer Records</span>
+      </a>
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="model-status">
+      <div class="status-dot {% if model_status|default(true) %}online{% else %}offline{% endif %}"></div>
+      <span>Model {% if model_status|default(true) %}Active{% else %}Offline{% endif %}</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+<!-- Main wrapper -->
+<div class="main-wrapper">
+  <!-- Top bar -->
+  <header class="topbar">
+    <button class="menu-btn" id="menuBtn">
+      <i class="fas fa-bars"></i>
+    </button>
+    <div class="topbar-breadcrumb">
+      <span class="breadcrumb-root">CartSense</span>
+      <i class="fas fa-chevron-right breadcrumb-sep"></i>
+      <span class="breadcrumb-current">{% block breadcrumb %}Home{% endblock %}</span>
+    </div>
+    <div class="topbar-actions">
+      <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm">
+        <i class="fas fa-plus"></i> New Prediction
+      </a>
+    </div>
+  </header>
+
+  <!-- Page content -->
+  <main class="page-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="page-footer">
+    <span>CartSense &copy; 2024 &mdash; Customer Purchase &amp; Churn Predictor</span>
+    <span>Flask &bull; SQLite &bull; Logistic Regression &bull; 17 Features</span>
+  </footer>
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

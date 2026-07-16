@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Prediction History{% endblock %}
+{% block breadcrumb %}Prediction History{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title"><i class="fas fa-clock-rotate-left text-accent"></i> Customer Prediction History</h1>
+  <p class="page-subtitle">Complete audit trail of all churn predictions — {{ total_rows }} total entries</p>
+</div>
+
+<div class="card animate-fade-up">
+  <div class="card-header">
+    <span class="card-title">All Predictions</span>
+    <span class="text-muted" style="font-size:.78rem;">
+      Page {{ page }} of {{ total_pages or 1 }}
+    </span>
+  </div>
+  <div class="table-wrap" style="border:none;border-radius:0;">
+    {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Prediction</th>
+          <th>Risk Level</th>
+          <th>Churn Prob</th>
+          <th>Retain Prob</th>
+          <th>Timestamp</th>
+          <th>View</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="text-dim text-mono" style="font-size:.76rem;">{{ r.id }}</td>
+          <td>
+            <div class="td-name">{{ r.customer_name }}</div>
+            <div class="td-email">{{ r.customer_email }}</div>
+          </td>
+          <td>
+            {% if r.prediction == 1 %}
+              <span class="badge badge-churn"><i class="fas fa-triangle-exclamation"></i> Churn</span>
+            {% else %}
+              <span class="badge badge-retain"><i class="fas fa-circle-check"></i> Retain</span>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-{{ (r.risk_level or 'Low')|lower }}">{{ r.risk_level or 'Low' }}</span></td>
+          <td class="text-mono" style="color:var(--rose);">{{ r.churn_probability }}%</td>
+          <td class="text-mono" style="color:var(--emerald);">{{ r.retain_probability }}%</td>
+          <td class="text-muted" style="font-size:.78rem;">{{ (r.triggered_at or '')[:16] }}</td>
+          <td>
+            {% if r.customer_id %}
+            <a href="{{ url_for('result_page', cid=r.customer_id) }}" class="btn btn-ghost btn-sm" style="padding:4px 10px;">
+              <i class="fas fa-eye"></i>
+            </a>
+            {% else %}
+            <span class="text-dim">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="table-empty">
+      <i class="fas fa-clock-rotate-left"></i>
+      <p>No prediction history yet.</p>
+      <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm mt-2">Run First Prediction</a>
+    </div>
+    {% endif %}
+  </div>
+  {% if total_pages and total_pages > 1 %}
+  <div class="card-footer flex gap-2 justify-end">
+    {% if page > 1 %}
+    <a href="{{ url_for('history', page=page-1) }}" class="btn btn-secondary btn-sm">
+      <i class="fas fa-chevron-left"></i> Previous
+    </a>
+    {% endif %}
+    <span class="btn btn-ghost btn-sm" style="cursor:default;">{{ page }} / {{ total_pages }}</span>
+    {% if page < total_pages %}
+    <a href="{{ url_for('history', page=page+1) }}" class="btn btn-secondary btn-sm">
+      Next <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

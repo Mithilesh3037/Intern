@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}About CartSense{% endblock %}
+{% block breadcrumb %}About CartSense{% endblock %}
+
+{% block extra_css %}
+<style>
+.tech-icon { width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.tech-icon.accent  { background:var(--accent-soft);  color:var(--accent); }
+.tech-icon.emerald { background:var(--emerald-soft); color:var(--emerald); }
+.tech-icon.sky     { background:var(--sky-soft);     color:var(--sky); }
+.tech-icon.amber   { background:var(--amber-soft);   color:var(--amber); }
+.tech-icon.rose    { background:var(--rose-soft);    color:var(--rose); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header"><h1 class="page-title">About CartSense</h1></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+  <div class="card animate-fade-up">
+    <div class="card-body">
+      <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;">What is CartSense?</h2>
+      <p style="font-size:.88rem;color:var(--text-muted);line-height:1.8;">
+        CartSense is an AI-powered customer analytics platform built as the final internship project
+        for Module 1–4. It predicts whether a customer is likely to <strong>continue purchasing</strong>
+        or <strong>churn</strong> based on their transaction and behavioural data.
+      </p>
+      <p style="font-size:.88rem;color:var(--text-muted);line-height:1.8;margin-top:12px;">
+        The platform integrates a trained <strong>Logistic Regression model</strong> with a full
+        Flask web application, SQLite database, and a professional SaaS-grade user interface.
+      </p>
+    </div>
+  </div>
+  <div class="card animate-fade-up delay-1">
+    <div class="card-body">
+      <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:12px;">Technology Stack</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:.85rem;">
+        {% for item in [
+          ('Python 3', 'fas fa-code', 'accent', 'Core language, data preprocessing'),
+          ('Scikit-Learn', 'fas fa-brain', 'emerald', 'Logistic Regression model'),
+          ('Flask 3', 'fas fa-server', 'sky', 'Web framework & REST API'),
+          ('SQLite', 'fas fa-database', 'amber', 'Customer records database'),
+          ('Chart.js', 'fas fa-chart-pie', 'rose', 'Interactive analytics charts'),
+          ('Render', 'fas fa-cloud', 'accent', 'Cloud deployment platform'),
+        ] %}
+        <div class="flex items-center gap-10">
+          <div class="tech-icon {{ item[2] }}">
+            <i class="{{ item[1] }}" style="font-size:.85rem;"></i>
+          </div>
+          <div>
+            <div style="font-weight:600;">{{ item[0] }}</div>
+            <div style="font-size:.75rem;color:var(--text-muted);">{{ item[3] }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modules -->
+<div class="card animate-fade-up delay-2 mb-4">
+  <div class="card-header"><span class="card-title">Internship Modules Covered</span></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+      {% for m in [
+        ('1','Python & ML Fundamentals','Data preprocessing, feature engineering, model training basics','fas fa-python','accent'),
+        ('2','Churn Prediction & Evaluation','Model evaluation metrics, hyperparameter tuning, data visualisation','fas fa-chart-bar','emerald'),
+        ('3','Flask Web Application','Routing, templates, forms, SQLite database, REST API design','fas fa-server','sky'),
+        ('4','Integration & Deployment','ML + Flask integration, UI/UX polish, Render cloud deployment','fas fa-rocket','amber'),
+      ] %}
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:18px;">
+        <div style="font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-dim);margin-bottom:8px;">Module {{ m[0] }}</div>
+        <div style="font-weight:700;margin-bottom:8px;font-size:.9rem;">{{ m[1] }}</div>
+        <div style="font-size:.78rem;color:var(--text-muted);line-height:1.7;">{{ m[2] }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Model Info -->
+<div class="card animate-fade-up delay-3">
+  <div class="card-header"><span class="card-title">ML Model Details</span></div>
+  <div class="card-body">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;font-size:.85rem;">
+      <div>
+        <div class="text-muted mb-1" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.6px;">Algorithm</div>
+        <div class="font-bold">Logistic Regression</div>
+        <div class="text-dim" style="font-size:.78rem;">Binary classification (0=Retain, 1=Churn)</div>
+      </div>
+      <div>
+        <div class="text-muted mb-1" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.6px;">Input Features</div>
+        <div class="font-bold">17 Features</div>
+        <div class="text-dim" style="font-size:.78rem;">Customer transaction & behavioural metrics</div>
+      </div>
+      <div>
+        <div class="text-muted mb-1" style="font-size:.75rem;text-transform:uppercase;letter-spacing:.6px;">Output</div>
+        <div class="font-bold">Churn Probability</div>
+        <div class="text-dim" style="font-size:.78rem;">0–100% with risk classification</div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,243 @@
+{% extends "base.html" %}
+{% block title %}Customer Churn Prediction{% endblock %}
+{% block breadcrumb %}New Prediction{% endblock %}
+
+{% block extra_css %}
+<style>
+.predict-layout { display: grid; grid-template-columns: 1fr 360px; gap: 20px; align-items: start; }
+.features-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.feature-input-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px;
+  transition: border-color .2s;
+}
+.feature-input-card:focus-within { border-color: var(--accent); }
+.feature-num { font-size: .65rem; color: var(--text-dim); margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.feature-lbl { font-size: .78rem; font-weight: 600; margin-bottom: 8px; color: var(--text-muted); }
+.feature-input-card input {
+  width: 100%; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 10px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace; font-size: .85rem; outline: none;
+  transition: border-color .2s;
+}
+.feature-input-card input:focus { border-color: var(--accent); }
+.sidebar-card { position: sticky; top: calc(var(--topbar-h) + 16px); }
+.customer-section .form-row { grid-template-columns: 1fr 1fr; }
+
+@media(max-width:1000px){ .predict-layout { grid-template-columns: 1fr; } .sidebar-card { position: static; } }
+@media(max-width:700px) { .features-container { grid-template-columns: 1fr 1fr; } }
+@media(max-width:480px) { .features-container { grid-template-columns: 1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% if not model_ok %}
+<div style="background:var(--rose-soft);border:1px solid rgba(244,63,94,.3);border-radius:var(--radius-sm);padding:14px 18px;margin-bottom:20px;color:var(--rose);font-size:.85rem;">
+  <i class="fas fa-triangle-exclamation"></i>
+  <strong>Model not loaded.</strong> Predictions are unavailable. Ensure <code>cartsense_model.pkl</code> exists in the project directory.
+</div>
+{% endif %}
+
+<div class="page-header">
+  <h1 class="page-title"><i class="fas fa-brain text-accent"></i> Customer Churn Prediction</h1>
+  <p class="page-subtitle">Enter customer details and transaction metrics to generate a churn risk prediction</p>
+</div>
+
+<form method="POST" action="{{ url_for('predict_submit') }}" id="predictForm">
+<div class="predict-layout">
+
+  <!-- Left: form -->
+  <div>
+    <!-- Customer Identity -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-user-circle text-accent"></i> Customer Identity</span>
+        <span class="text-muted" style="font-size:.75rem;">Required fields</span>
+      </div>
+      <div class="card-body customer-section">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="name" class="form-control" placeholder="e.g. Arjun Mehta" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-control" placeholder="arjun@company.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone Number</label>
+            <input type="text" name="phone" class="form-control" placeholder="+91 98xxx xxxxx">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" name="company" class="form-control" placeholder="Company name">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Customer Segment</label>
+          <select name="segment" class="form-control">
+            <option value="General">General</option>
+            <option value="Enterprise">Enterprise</option>
+            <option value="SMB">SMB</option>
+            <option value="Startup">Startup</option>
+            <option value="Retail">Retail</option>
+            <option value="E-Commerce">E-Commerce</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature Inputs -->
+    <div class="card mb-3">
+      <div class="card-header">
+        <span class="card-title"><i class="fas fa-sliders text-accent"></i> Prediction Features (17)</span>
+        <button type="button" class="btn btn-ghost btn-sm" id="fillDemoBtn">
+          <i class="fas fa-magic-wand-sparkles"></i> Fill Demo
+        </button>
+      </div>
+      <div class="card-body">
+        <p class="text-muted mb-3" style="font-size:.8rem;">
+          These 17 features are input directly to the trained Logistic Regression model.
+          Feature names will be updated when the original training dataset schema is available.
+        </p>
+        <div class="features-container">
+          {% for feat in features %}
+          <div class="feature-input-card">
+            <div class="feature-num">F{{ loop.index }} / 17</div>
+            <div class="feature-lbl">{{ feat.label }}</div>
+            <input
+              type="number"
+              name="{{ feat.key }}"
+              id="{{ feat.key }}"
+              step="{{ feat.step }}"
+              min="{{ feat.min }}"
+              max="{{ feat.max }}"
+              value="{{ feat.default }}"
+              placeholder="0"
+            >
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Internal Notes (Optional)</label>
+          <textarea name="notes" class="form-control" placeholder="Add any relevant context about this customer..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: sticky summary -->
+  <div class="sidebar-card">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Prediction Summary</span>
+      </div>
+      <div class="card-body">
+        <div class="text-muted" style="font-size:.82rem;line-height:1.8;margin-bottom:16px;">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-circle-check text-emerald"></i>
+            Logistic Regression Model
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-circle-check text-emerald"></i>
+            17 Input Features
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-circle-check text-emerald"></i>
+            Binary Output: Retain / Churn
+          </div>
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-circle-check text-emerald"></i>
+            Probability Score (0–100%)
+          </div>
+          <div class="flex items-center gap-2">
+            <i class="fas fa-circle-check text-emerald"></i>
+            Saved to Customer Records
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="text-muted" style="font-size:.77rem;margin-bottom:16px;">
+          <strong class="text-rose">High Risk</strong> ≥ 70% churn probability<br>
+          <strong class="text-amber">Medium Risk</strong> 40–69% churn probability<br>
+          <strong class="text-emerald">Low Risk</strong> &lt; 40% churn probability
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg" id="submitBtn" {% if not model_ok %}disabled{% endif %}>
+          <i class="fas fa-brain"></i>
+          <span id="submitLabel">Run Churn Prediction</span>
+          <span class="spinner hidden" id="submitSpinner"></span>
+        </button>
+        {% if not model_ok %}
+        <p class="text-dim text-center mt-2" style="font-size:.75rem;">Model unavailable</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Quick stats live preview -->
+    <div class="card mt-3">
+      <div class="card-body">
+        <div class="stat-label mb-2">Form Progress</div>
+        <div class="progress-track">
+          <div class="progress-fill retain" id="formProgress" style="width:0%"></div>
+        </div>
+        <div class="text-dim mt-2" style="font-size:.75rem;"><span id="filledCount">0</span> / 17 features filled</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Feature keys passed as JSON — avoids Jinja2-in-JS linter errors -->
+<script type="application/json" id="featureData">
+  {
+    "keys": {{ features | map(attribute='key') | list | tojson }},
+    "demo": [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]
+  }
+</script>
+<script>
+(function () {
+  var data       = JSON.parse(document.getElementById('featureData').textContent);
+  var featureKeys = data.keys;
+  var demoValues  = data.demo;
+
+  // Fill demo values
+  document.getElementById('fillDemoBtn').addEventListener('click', function () {
+    featureKeys.forEach(function (key, i) {
+      var el = document.getElementById(key);
+      if (el) el.value = demoValues[i];
+    });
+    updateProgress();
+  });
+
+  // Progress tracker
+  function updateProgress() {
+    var filled = featureKeys.filter(function (k) {
+      var v = document.getElementById(k).value;
+      return v !== '' && v !== '0';
+    }).length;
+    document.getElementById('filledCount').textContent = filled;
+    document.getElementById('formProgress').style.width = (filled / 17 * 100) + '%';
+  }
+  document.querySelectorAll('.feature-input-card input').forEach(function (inp) {
+    inp.addEventListener('input', updateProgress);
+  });
+
+  // Submit spinner
+  document.getElementById('predictForm').addEventListener('submit', function () {
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    document.getElementById('submitLabel').textContent = 'Running Analysis...';
+    document.getElementById('submitSpinner').classList.remove('hidden');
+  });
+}());
+</script>
+{% endblock %}

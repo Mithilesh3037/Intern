@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Customer Analytics Dashboard{% endblock %}
+{% block breadcrumb %}Analytics Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+.chart-container { position:relative; height:220px; }
+canvas { border-radius: var(--radius-sm); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center mb-4">
+  <div>
+    <h1 class="page-title"><i class="fas fa-chart-pie text-accent"></i> Customer Analytics Dashboard</h1>
+    <p class="page-subtitle">Real-time overview of customer churn predictions and risk distribution</p>
+  </div>
+  <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> New Prediction
+  </a>
+</div>
+
+<!-- Stat Cards -->
+<div class="grid grid-4 mb-4">
+  <div class="card stat-card animate-fade-up">
+    <div class="stat-icon accent"><i class="fas fa-users"></i></div>
+    <div class="stat-value">{{ total }}</div>
+    <div class="stat-label">Total Customers</div>
+    <div class="stat-trend text-muted">All time records</div>
+  </div>
+  <div class="card stat-card animate-fade-up delay-1">
+    <div class="stat-icon rose"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="stat-value text-rose">{{ churned }}</div>
+    <div class="stat-label">Likely to Churn</div>
+    <div class="stat-trend text-muted">{{ ((churned/total*100)|round(1)) if total else 0 }}% of total</div>
+  </div>
+  <div class="card stat-card animate-fade-up delay-2">
+    <div class="stat-icon emerald"><i class="fas fa-circle-check"></i></div>
+    <div class="stat-value text-emerald">{{ retained }}</div>
+    <div class="stat-label">Likely to Retain</div>
+    <div class="stat-trend text-muted">{{ ((retained/total*100)|round(1)) if total else 0 }}% of total</div>
+  </div>
+  <div class="card stat-card animate-fade-up delay-3">
+    <div class="stat-icon rose"><i class="fas fa-shield-halved"></i></div>
+    <div class="stat-value text-amber">{{ high_risk }}</div>
+    <div class="stat-label">High Risk Customers</div>
+    <div class="stat-trend text-muted">Avg churn prob: {{ avg_churn }}%</div>
+  </div>
+</div>
+
+<!-- Charts row -->
+<div class="grid grid-2 mb-4">
+  <!-- Churn Donut -->
+  <div class="card animate-fade-up delay-1">
+    <div class="card-header"><span class="card-title">Churn vs Retention Split</span></div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="churnDonut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Distribution -->
+  <div class="card animate-fade-up delay-2">
+    <div class="card-header"><span class="card-title">Risk Level Distribution</span></div>
+    <div class="card-body">
+      <div class="chart-container">
+        <canvas id="riskBar"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Daily Predictions Chart -->
+<div class="card mb-4 animate-fade-up delay-3">
+  <div class="card-header"><span class="card-title">Daily Prediction Activity (Last 14 Days)</span></div>
+  <div class="card-body">
+    <div class="chart-container" style="height:180px;">
+      <canvas id="dailyLine"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Recent Customer Records Table -->
+<div class="card animate-fade-up delay-4">
+  <div class="card-header">
+    <span class="card-title">Recent Customer Records</span>
+    <a href="{{ url_for('customers_list') }}" class="btn btn-ghost btn-sm">View All</a>
+  </div>
+  <div class="table-wrap" style="border:none;border-radius:0;">
+    {% if customers %}
+    <table>
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Segment</th>
+          <th>Prediction</th>
+          <th>Risk</th>
+          <th>Churn Prob</th>
+          <th>Updated</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers[:10] %}
+        <tr>
+          <td>
+            <div class="td-name">{{ c.name }}</div>
+            <div class="td-email">{{ c.email }}</div>
+          </td>
+          <td><span class="badge badge-general">{{ c.segment or 'General' }}</span></td>
+          <td>
+            {% if c.prediction == 1 %}
+              <span class="badge badge-churn"><i class="fas fa-triangle-exclamation"></i> Churn</span>
+            {% else %}
+              <span class="badge badge-retain"><i class="fas fa-circle-check"></i> Retain</span>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-{{ (c.risk_level or 'Low')|lower }}">{{ c.risk_level or 'Low' }}</span></td>
+          <td class="text-mono">{{ c.churn_probability }}%</td>
+          <td class="text-muted" style="font-size:.78rem;">{{ (c.updated_at or '')[:10] }}</td>
+          <td>
+            <a href="{{ url_for('result_page', cid=c.id) }}" class="btn btn-ghost btn-sm" style="padding:4px 10px;">
+              <i class="fas fa-eye"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="table-empty">
+      <i class="fas fa-chart-pie"></i>
+      <p>No customer records yet.</p>
+      <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm mt-2">Run First Prediction</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+Chart.defaults.color = '#8892a8';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.07)';
+Chart.defaults.font.family = 'Inter';
+
+const COLORS = {
+  accent:  '#6366f1', emerald: '#10b981', rose: '#f43f5e',
+  amber:   '#f59e0b', sky:     '#0ea5e9', purple: '#a78bfa'
+};
+
+fetch('/api/stats').then(r=>r.json()).then(d => {
+  // Churn Donut
+  new Chart(document.getElementById('churnDonut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Likely to Churn', 'Likely to Retain'],
+      datasets: [{
+        data: [d.churned || 0, d.retained || 0],
+        backgroundColor: [COLORS.rose, COLORS.emerald],
+        borderWidth: 0, hoverOffset: 6,
+      }]
+    },
+    options: {
+      cutout: '68%', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } } }
+    }
+  });
+
+  // Risk Bar
+  new Chart(document.getElementById('riskBar'), {
+    type: 'bar',
+    data: {
+      labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+      datasets: [{
+        label: 'Customers',
+        data: [d.high_risk || 0, d.med_risk || 0, d.low_risk || 0],
+        backgroundColor: [COLORS.rose, COLORS.amber, COLORS.emerald],
+        borderRadius: 6, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } } }
+    }
+  });
+
+  // Daily line
+  const daily = d.daily_predictions || [];
+  new Chart(document.getElementById('dailyLine'), {
+    type: 'line',
+    data: {
+      labels: daily.map(r => r.day),
+      datasets: [{
+        label: 'Predictions',
+        data: daily.map(r => r.cnt),
+        borderColor: COLORS.accent,
+        backgroundColor: 'rgba(99,102,241,0.1)',
+        fill: true, tension: 0.4, pointRadius: 4,
+        pointBackgroundColor: COLORS.accent,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } } }
+    }
+  });
+});
+</script>
+{% endblock %}

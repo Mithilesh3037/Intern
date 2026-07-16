@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% block title %}Edit Customer — {{ customer.name }}{% endblock %}
+{% block breadcrumb %}Edit Customer{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1 class="page-title"><i class="fas fa-pen text-accent"></i> Edit Customer Details</h1>
+    <p class="page-subtitle">Update customer information — prediction will be automatically re-run</p>
+  </div>
+  <a href="{{ url_for('result_page', cid=customer.id) }}" class="btn btn-ghost btn-sm">
+    <i class="fas fa-arrow-left"></i> Back to Result
+  </a>
+</div>
+
+<form method="POST" action="{{ url_for('edit_customer', cid=customer.id) }}" id="editForm">
+<div style="display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start;">
+
+  <div>
+    <!-- Identity -->
+    <div class="card mb-3 animate-fade-up">
+      <div class="card-header"><span class="card-title"><i class="fas fa-user-circle text-accent"></i> Customer Identity</span></div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name *</label>
+            <input type="text" name="name" class="form-control" value="{{ customer.name }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" name="email" class="form-control" value="{{ customer.email }}" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" name="phone" class="form-control" value="{{ customer.phone or '' }}">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company</label>
+            <input type="text" name="company" class="form-control" value="{{ customer.company or '' }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Segment</label>
+          <select name="segment" class="form-control">
+            {% for seg in ['General','Enterprise','SMB','Startup','Retail','E-Commerce'] %}
+            <option value="{{ seg }}" {% if customer.segment == seg %}selected{% endif %}>{{ seg }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="card mb-3 animate-fade-up delay-1">
+      <div class="card-header"><span class="card-title"><i class="fas fa-sliders text-accent"></i> Prediction Features</span></div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+          {% for feat in features %}
+          <div class="feature-input-card" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;">
+            <div style="font-size:.65rem;color:var(--text-dim);font-family:'JetBrains Mono',monospace;margin-bottom:3px;">F{{ loop.index }}/17</div>
+            <div style="font-size:.76rem;font-weight:600;color:var(--text-muted);margin-bottom:7px;">{{ feat.label }}</div>
+            <input type="number" name="{{ feat.key }}" step="{{ feat.step }}"
+              value="{{ customer.get(feat.key, 0) }}"
+              style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.85rem;outline:none;">
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="card animate-fade-up delay-2">
+      <div class="card-body">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">Internal Notes</label>
+          <textarea name="notes" class="form-control">{{ customer.notes or '' }}</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div style="position:sticky;top:calc(var(--topbar-h) + 16px);">
+    <div class="card mb-3 animate-fade-up">
+      <div class="card-header"><span class="card-title">Current Prediction</span></div>
+      <div class="card-body">
+        {% if customer.prediction == 1 %}
+          <span class="badge badge-churn" style="font-size:.85rem;padding:8px 16px;">
+            <i class="fas fa-triangle-exclamation"></i> Likely to Churn
+          </span>
+        {% else %}
+          <span class="badge badge-retain" style="font-size:.85rem;padding:8px 16px;">
+            <i class="fas fa-circle-check"></i> Likely to Retain
+          </span>
+        {% endif %}
+        <div class="divider"></div>
+        <div style="font-size:.82rem;display:flex;flex-direction:column;gap:8px;">
+          <div class="flex justify-between">
+            <span class="text-muted">Risk Level</span>
+            <span class="badge badge-{{ (customer.risk_level or 'Low')|lower }}">{{ customer.risk_level or 'Low' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted">Churn Prob</span>
+            <strong class="text-rose">{{ customer.churn_probability }}%</strong>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-muted">Retain Prob</span>
+            <strong class="text-emerald">{{ customer.retain_probability }}%</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card animate-fade-up delay-1">
+      <div class="card-body" style="display:flex;flex-direction:column;gap:8px;">
+        <button type="submit" class="btn btn-primary btn-full" id="saveBtn">
+          <i class="fas fa-rotate-right"></i> Save & Re-run Prediction
+        </button>
+        <a href="{{ url_for('result_page', cid=customer.id) }}" class="btn btn-ghost btn-full">Cancel</a>
+        <div class="divider"></div>
+        <button type="button" class="btn btn-danger btn-full btn-sm"
+          onclick="document.getElementById('deleteForm').submit()">
+          <i class="fas fa-trash"></i> Delete Customer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+</form>
+
+<!-- Hidden delete form -->
+<form id="deleteForm" method="POST" action="{{ url_for('delete_customer', cid=customer.id) }}" style="display:none;"></form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('editForm').addEventListener('submit', () => {
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}CartSense — AI-Powered Customer Churn Prediction{% endblock %}
+{% block breadcrumb %}Home{% endblock %}
+
+{% block extra_css %}
+<style>
+.hero { padding: 60px 0 40px; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: .72rem; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--accent-light);
+  background: var(--accent-soft); border: 1px solid rgba(99,102,241,.2);
+  padding: 5px 14px; border-radius: 20px; margin-bottom: 22px;
+}
+.hero-title {
+  font-size: 3rem; font-weight: 900; line-height: 1.1; letter-spacing: -.5px;
+  margin-bottom: 18px;
+}
+.hero-title .grad {
+  background: linear-gradient(135deg, var(--accent-light), #a78bfa, var(--sky));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero-desc { font-size: 1.05rem; color: var(--text-muted); max-width: 560px; margin-bottom: 32px; line-height: 1.8; }
+.hero-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.hero-stats { display: flex; gap: 32px; margin-top: 48px; flex-wrap: wrap; }
+.hero-stat-val { font-size: 1.8rem; font-weight: 800; }
+.hero-stat-lbl { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+.hero-divider  { width: 1px; background: var(--border); }
+
+.features-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 56px; }
+.feature-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 24px;
+  transition: border-color .2s, transform .2s;
+}
+.feature-card:hover { border-color: var(--border-hi); transform: translateY(-2px); }
+.feature-icon {
+  width: 44px; height: 44px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.1rem; margin-bottom: 16px;
+}
+.feature-title { font-weight: 700; margin-bottom: 8px; font-size: .95rem; }
+.feature-desc  { font-size: .82rem; color: var(--text-muted); line-height: 1.7; }
+
+.workflow-section { margin-top: 60px; }
+.workflow-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 0; margin-top: 32px; position: relative; }
+.workflow-steps::before {
+  content:''; position:absolute; top:24px; left:12.5%; right:12.5%;
+  height:1px; background: linear-gradient(90deg, var(--accent), var(--sky));
+  opacity:.4;
+}
+.workflow-step { text-align: center; padding: 0 12px; }
+.step-num {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #a78bfa);
+  color: #fff; font-weight: 800; font-size: 1rem;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 14px; position: relative; z-index: 1;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+.step-title { font-size: .88rem; font-weight: 700; margin-bottom: 6px; }
+.step-desc  { font-size: .76rem; color: var(--text-muted); }
+
+.cta-section {
+  margin-top: 60px; padding: 44px;
+  background: linear-gradient(135deg, rgba(99,102,241,.15), rgba(139,92,246,.1));
+  border: 1px solid rgba(99,102,241,.25); border-radius: var(--radius-lg);
+  text-align: center;
+}
+.cta-title { font-size: 1.7rem; font-weight: 800; margin-bottom: 12px; }
+.cta-desc  { color: var(--text-muted); margin-bottom: 28px; }
+
+@media(max-width:900px){ .features-grid { grid-template-columns: 1fr 1fr; } .workflow-steps { grid-template-columns: 1fr 1fr; } .workflow-steps::before { display:none; } }
+@media(max-width:600px){ .features-grid { grid-template-columns: 1fr; } .workflow-steps { grid-template-columns: 1fr; } .hero-title { font-size: 2rem; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero animate-fade-up">
+  <div class="hero-eyebrow"><i class="fas fa-microchip"></i> AI-Powered Analytics Platform</div>
+  <h1 class="hero-title">
+    Predict Customer Churn<br>
+    <span class="grad">Before It Happens</span>
+  </h1>
+  <p class="hero-desc">
+    CartSense uses machine learning to analyse customer purchase behaviour
+    and predict churn risk — giving your team the insight to act at the right moment.
+  </p>
+  <div class="hero-actions">
+    <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-lg">
+      <i class="fas fa-brain"></i> Run Churn Prediction
+    </a>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-lg">
+      <i class="fas fa-chart-pie"></i> View Analytics
+    </a>
+  </div>
+
+  <div class="hero-stats">
+    <div>
+      <div class="hero-stat-val text-accent">17</div>
+      <div class="hero-stat-lbl">Prediction Features</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div>
+      <div class="hero-stat-val text-emerald">LR Model</div>
+      <div class="hero-stat-lbl">Logistic Regression</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div>
+      <div class="hero-stat-val text-amber">Real-Time</div>
+      <div class="hero-stat-lbl">Inference Engine</div>
+    </div>
+    <div class="hero-divider"></div>
+    <div>
+      <div class="hero-stat-val text-sky">SQLite</div>
+      <div class="hero-stat-lbl">Customer Records DB</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="features-grid animate-fade-up delay-2">
+  <div class="feature-card">
+    <div class="feature-icon" style="background:var(--accent-soft);color:var(--accent)"><i class="fas fa-brain"></i></div>
+    <div class="feature-title">ML Churn Prediction</div>
+    <div class="feature-desc">Logistic Regression model analyses 17 customer features to predict churn probability with confidence scores.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon" style="background:var(--emerald-soft);color:var(--emerald)"><i class="fas fa-chart-pie"></i></div>
+    <div class="feature-title">Analytics Dashboard</div>
+    <div class="feature-desc">Visual breakdown of customer segments, churn rates, risk distribution, and daily prediction activity.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon" style="background:var(--sky-soft);color:var(--sky)"><i class="fas fa-users"></i></div>
+    <div class="feature-title">Customer Records</div>
+    <div class="feature-desc">Full CRUD management — search, filter, edit, and delete customer records with instant re-prediction.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon" style="background:var(--amber-soft);color:var(--amber)"><i class="fas fa-clock-rotate-left"></i></div>
+    <div class="feature-title">Prediction History</div>
+    <div class="feature-desc">Complete audit trail of every prediction run — customer, features, result, and timestamp.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon" style="background:var(--rose-soft);color:var(--rose)"><i class="fas fa-shield-halved"></i></div>
+    <div class="feature-title">Risk Classification</div>
+    <div class="feature-desc">Automatic High / Medium / Low risk labelling based on churn probability for instant triage.</div>
+  </div>
+  <div class="feature-card">
+    <div class="feature-icon" style="background:rgba(167,139,250,.12);color:#a78bfa"><i class="fas fa-cloud-arrow-up"></i></div>
+    <div class="feature-title">Render Deployment</div>
+    <div class="feature-desc">Production-ready configuration for one-click deployment on Render cloud platform.</div>
+  </div>
+</section>
+
+<!-- Workflow -->
+<section class="workflow-section animate-fade-up delay-3">
+  <div class="page-header">
+    <h2 class="page-title" style="font-size:1.3rem;">How CartSense Works</h2>
+    <p class="page-subtitle">Four steps from customer data to actionable churn insight</p>
+  </div>
+  <div class="workflow-steps">
+    <div class="workflow-step">
+      <div class="step-num">1</div>
+      <div class="step-title">Enter Customer Data</div>
+      <div class="step-desc">Fill the 17-feature prediction form with customer transaction metrics</div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-num">2</div>
+      <div class="step-title">AI Analyses</div>
+      <div class="step-desc">Logistic Regression model computes churn probability in milliseconds</div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-num">3</div>
+      <div class="step-title">View Prediction</div>
+      <div class="step-desc">Get Retain / Churn verdict with confidence %, risk level, and breakdown</div>
+    </div>
+    <div class="workflow-step">
+      <div class="step-num">4</div>
+      <div class="step-title">Track & Manage</div>
+      <div class="step-desc">Records saved to SQLite — monitor, edit, search, and export anytime</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section animate-fade-up delay-4">
+  <div class="cta-title">Ready to predict your first customer?</div>
+  <div class="cta-desc">Run a churn prediction now — takes under 30 seconds.</div>
+  <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-lg">
+    <i class="fas fa-rocket"></i> Get Started
+  </a>
+</div>
+{% endblock %}
