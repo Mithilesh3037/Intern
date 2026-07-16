@@ -1,0 +1,168 @@
+{% extends "base.html" %}
+{% block title %}Customer Records{% endblock %}
+{% block breadcrumb %}Customer Records{% endblock %}
+
+{% block extra_css %}
+<style>
+.churn-pct-high   { color: var(--rose); }
+.churn-pct-medium { color: var(--amber); }
+.churn-pct-low    { color: var(--emerald); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center">
+  <div>
+    <h1 class="page-title"><i class="fas fa-users text-accent"></i> Customer Records</h1>
+    <p class="page-subtitle">Search, filter, manage and delete customer records</p>
+  </div>
+  <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Add Customer
+  </a>
+</div>
+
+<!-- Filter Row -->
+<form method="GET" action="{{ url_for('customers_list') }}">
+<div class="filter-row animate-fade-up">
+  <div class="search-bar" style="flex:1;max-width:360px;">
+    <i class="fas fa-magnifying-glass"></i>
+    <input type="text" name="q" value="{{ q }}" placeholder="Search name, email, company…">
+  </div>
+  <select name="risk" class="filter-select">
+    <option value="">All Risk Levels</option>
+    <option value="High"   {% if risk_f=='High'   %}selected{% endif %}>High Risk</option>
+    <option value="Medium" {% if risk_f=='Medium' %}selected{% endif %}>Medium Risk</option>
+    <option value="Low"    {% if risk_f=='Low'    %}selected{% endif %}>Low Risk</option>
+  </select>
+  <select name="pred" class="filter-select">
+    <option value="">All Predictions</option>
+    <option value="1" {% if pred_f=='1' %}selected{% endif %}>Churn</option>
+    <option value="0" {% if pred_f=='0' %}selected{% endif %}>Retain</option>
+  </select>
+  <select name="segment" class="filter-select">
+    <option value="">All Segments</option>
+    {% for seg in segments %}
+    <option value="{{ seg }}" {% if seg_f==seg %}selected{% endif %}>{{ seg }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-filter"></i> Filter</button>
+  <a href="{{ url_for('customers_list') }}" class="btn btn-ghost btn-sm"><i class="fas fa-xmark"></i> Reset</a>
+</div>
+</form>
+
+<!-- Table -->
+<div class="card animate-fade-up delay-1">
+  <div class="card-header">
+    <span class="card-title">{{ customers|length }} Record{{ 's' if customers|length != 1 else '' }}</span>
+    {% if customers %}
+    <span class="text-muted" style="font-size:.78rem;">
+      Churn: {{ customers|selectattr('prediction','equalto',1)|list|length }} &bull;
+      Retain: {{ customers|selectattr('prediction','equalto',0)|list|length }}
+    </span>
+    {% endif %}
+  </div>
+  <div class="table-wrap" style="border:none;border-radius:0;">
+    {% if customers %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer</th>
+          <th>Company</th>
+          <th>Segment</th>
+          <th>Prediction</th>
+          <th>Risk</th>
+          <th>Churn %</th>
+          <th>Added</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in customers %}
+        <tr>
+          <td class="text-dim text-mono" style="font-size:.78rem;">{{ c.id }}</td>
+          <td>
+            <div class="td-name">{{ c.name }}</div>
+            <div class="td-email">{{ c.email }}</div>
+          </td>
+          <td class="text-muted" style="font-size:.82rem;">{{ c.company or '—' }}</td>
+          <td><span class="badge badge-general">{{ c.segment or 'General' }}</span></td>
+          <td>
+            {% if c.prediction == 1 %}
+              <span class="badge badge-churn"><i class="fas fa-triangle-exclamation"></i> Churn</span>
+            {% else %}
+              <span class="badge badge-retain"><i class="fas fa-circle-check"></i> Retain</span>
+            {% endif %}
+          </td>
+          <td><span class="badge badge-{{ (c.risk_level or 'Low')|lower }}">{{ c.risk_level or 'Low' }}</span></td>
+          <td class="text-mono {% if (c.churn_probability or 0) >= 70 %}churn-pct-high{% elif (c.churn_probability or 0) >= 40 %}churn-pct-medium{% else %}churn-pct-low{% endif %}">
+            {{ c.churn_probability or 0 }}%
+          </td>
+          <td class="text-muted" style="font-size:.78rem;">{{ (c.created_at or '')[:10] }}</td>
+          <td>
+            <div class="flex gap-2">
+              <a href="{{ url_for('result_page', cid=c.id) }}" class="btn btn-ghost btn-sm" title="View Result" style="padding:5px 9px;">
+                <i class="fas fa-eye"></i>
+              </a>
+              <a href="{{ url_for('edit_customer', cid=c.id) }}" class="btn btn-secondary btn-sm" title="Edit" style="padding:5px 9px;">
+                <i class="fas fa-pen"></i>
+              </a>
+              <button class="btn btn-danger btn-sm" title="Delete" style="padding:5px 9px;"
+                data-delete-id="{{ c.id }}" data-delete-name="{{ c.name|e }}"
+                onclick="confirmDelete(this.dataset.deleteId, this.dataset.deleteName)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="table-empty">
+      <i class="fas fa-users"></i>
+      <p>No customers found{% if q or risk_f or pred_f %} matching your filters{% endif %}.</p>
+      {% if q or risk_f or pred_f %}
+        <a href="{{ url_for('customers_list') }}" class="btn btn-ghost btn-sm mt-2">Clear Filters</a>
+      {% else %}
+        <a href="{{ url_for('predict_form') }}" class="btn btn-primary btn-sm mt-2">Run First Prediction</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" style="display:none;position:fixed;inset:0;z-index:999;display:none;align-items:center;justify-content:center;">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);" onclick="closeDelete()"></div>
+  <div class="card" style="position:relative;z-index:1;width:400px;max-width:90vw;padding:0;">
+    <div class="card-header" style="border-bottom:1px solid var(--rose-soft);">
+      <span class="card-title text-rose"><i class="fas fa-trash"></i> Delete Customer Record</span>
+    </div>
+    <div class="card-body">
+      <p style="font-size:.88rem;color:var(--text-muted);margin-bottom:18px;">
+        Are you sure you want to permanently delete <strong id="deleteName"></strong>?
+        This action cannot be undone and all prediction history for this customer will also be removed.
+      </p>
+      <div class="flex gap-2 justify-end">
+        <button class="btn btn-ghost" onclick="closeDelete()">Cancel</button>
+        <form id="deleteForm" method="POST">
+          <button type="submit" class="btn btn-danger"><i class="fas fa-trash"></i> Delete Permanently</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const modal = document.getElementById('deleteModal');
+function confirmDelete(id, name) {
+  document.getElementById('deleteName').textContent = name;
+  document.getElementById('deleteForm').action = '/customers/' + id + '/delete';
+  modal.style.display = 'flex';
+}
+function closeDelete() { modal.style.display = 'none'; }
+</script>
+{% endblock %}
