@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login — CartSense Analytics</title>
+  <meta name="description" content="Sign in to CartSense – AI-powered customer churn prediction platform."/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+  <style>
+    /* ── Reuse same CSS tokens as the main app ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:           #080c14;
+      --bg2:          #0d1220;
+      --bg3:          #111827;
+      --surface:      #141c2e;
+      --surface2:     #1a2438;
+      --border:       rgba(255,255,255,0.07);
+      --border-hi:    rgba(255,255,255,0.14);
+      --text:         #e8edf5;
+      --text-muted:   #8892a8;
+      --text-dim:     #4a5568;
+      --accent:       #6366f1;
+      --accent-light: #818cf8;
+      --accent-glow:  rgba(99,102,241,0.35);
+      --accent-soft:  rgba(99,102,241,0.12);
+      --rose:         #f43f5e;
+      --rose-soft:    rgba(244,63,94,0.12);
+      --rose-glow:    rgba(244,63,94,0.3);
+      --radius:       12px;
+      --radius-sm:    8px;
+    }
+    html { font-size: 15px; }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Animated background orbs ── */
+    .bg-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+      animation: orbFloat 8s ease-in-out infinite;
+    }
+    .bg-orb-1 {
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(99,102,241,0.18), transparent 70%);
+      top: -150px; left: -150px;
+      animation-delay: 0s;
+    }
+    .bg-orb-2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.14), transparent 70%);
+      bottom: -100px; right: -100px;
+      animation-delay: -4s;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      50%       { transform: translate(20px, -20px) scale(1.05); }
+    }
+
+    /* ── Grid pattern overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── Login card ── */
+    .login-wrap {
+      width: 100%; max-width: 420px;
+      padding: 20px;
+      position: relative; z-index: 1;
+      animation: fadeUp .45s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Brand header ── */
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+      justify-content: center;
+    }
+    .brand-mark {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 18px;
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+    .brand-text {}
+    .brand-name    { display: block; font-size: 1.3rem; font-weight: 800; letter-spacing: -.4px; }
+    .brand-tagline { display: block; font-size: .7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.2px; }
+
+    /* ── Card ── */
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 32px 30px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04);
+    }
+    .login-card-header { margin-bottom: 26px; }
+    .login-card-header h1 {
+      font-size: 1.25rem; font-weight: 800; margin-bottom: 5px;
+    }
+    .login-card-header p {
+      font-size: .83rem; color: var(--text-muted);
+    }
+
+    /* ── Form elements ── */
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block; font-size: .75rem; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 7px;
+      text-transform: uppercase; letter-spacing: .5px;
+    }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+      color: var(--text-dim); font-size: .85rem; pointer-events: none;
+      transition: color .2s;
+    }
+    .form-control {
+      width: 100%; padding: 11px 14px 11px 38px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-family: inherit; font-size: .875rem;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+    }
+    .form-control::placeholder { color: var(--text-dim); }
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+    .form-control:focus + .input-focus-icon,
+    .input-wrap:focus-within .input-icon { color: var(--accent-light); }
+
+    /* Toggle password visibility */
+    .pwd-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-dim); background: none; border: none;
+      cursor: pointer; font-size: .85rem; padding: 4px;
+      transition: color .2s;
+    }
+    .pwd-toggle:hover { color: var(--text-muted); }
+
+    /* ── Error alert ── */
+    .alert-error {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px; border-radius: var(--radius-sm);
+      background: var(--rose-soft); border: 1px solid rgba(244,63,94,.3);
+      color: var(--rose); font-size: .83rem; font-weight: 500;
+      margin-bottom: 20px;
+      animation: fadeUp .3s ease both;
+    }
+    .alert-error i { flex-shrink: 0; }
+
+    /* ── Submit button ── */
+    .btn-login {
+      width: 100%; padding: 12px 18px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      color: #fff; border: none; border-radius: var(--radius-sm);
+      font-family: inherit; font-size: .92rem; font-weight: 700;
+      cursor: pointer; letter-spacing: .2px;
+      box-shadow: 0 2px 16px var(--accent-glow);
+      transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-login:hover  { transform: translateY(-1px); box-shadow: 0 6px 24px var(--accent-glow); }
+    .btn-login:active { transform: none; }
+
+    /* ── Footer note ── */
+    .login-footer {
+      text-align: center; margin-top: 22px;
+      font-size: .73rem; color: var(--text-dim);
+    }
+    .login-footer span { color: var(--accent-light); }
+  </style>
+</head>
+<body>
+
+<!-- Background orbs -->
+<div class="bg-orb bg-orb-1"></div>
+<div class="bg-orb bg-orb-2"></div>
+
+<div class="login-wrap">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-mark">
+      <i class="fas fa-chart-network"></i>
+    </div>
+    <div class="brand-text">
+      <span class="brand-name">CartSense</span>
+      <span class="brand-tagline">AI Analytics Platform</span>
+    </div>
+  </div>
+
+  <!-- Card -->
+  <div class="login-card">
+    <div class="login-card-header">
+      <h1>Welcome back</h1>
+      <p>Sign in to access your analytics dashboard</p>
+    </div>
+
+    <!-- Error flash -->
+    {% if error %}
+    <div class="alert-error" id="loginError" role="alert">
+      <i class="fas fa-circle-exclamation"></i>
+      <span>{{ error }}</span>
+    </div>
+    {% endif %}
+
+    <!-- Login form -->
+    <form method="POST" action="{{ url_for('login') }}" id="loginForm">
+      <!-- User ID -->
+      <div class="form-group">
+        <label class="form-label" for="username">User ID</label>
+        <div class="input-wrap">
+          <i class="fas fa-user input-icon"></i>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            class="form-control"
+            placeholder="Enter your user ID"
+            required
+            autocomplete="username"
+            autofocus
+          />
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div class="input-wrap">
+          <i class="fas fa-lock input-icon"></i>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            class="form-control"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="pwd-toggle" id="pwdToggle" aria-label="Toggle password visibility">
+            <i class="fas fa-eye" id="pwdToggleIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        <i class="fas fa-arrow-right-to-bracket"></i>
+        Sign In
+      </button>
+    </form>
+  </div>
+
+  <div class="login-footer">
+    CartSense &copy; 2024 &mdash; <span>Internship Final Project</span>
+  </div>
+
+</div>
+
+<script>
+  // Toggle password visibility
+  document.getElementById('pwdToggle').addEventListener('click', function () {
+    const pwd  = document.getElementById('password');
+    const icon = document.getElementById('pwdToggleIcon');
+    if (pwd.type === 'password') {
+      pwd.type = 'text';
+      icon.className = 'fas fa-eye-slash';
+    } else {
+      pwd.type = 'password';
+      icon.className = 'fas fa-eye';
+    }
+  });
+
+  // Button loading state on submit
+  document.getElementById('loginForm').addEventListener('submit', function () {
+    const btn = document.getElementById('loginBtn');
+    btn.innerHTML = '<span style="width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block"></span> Signing in…';
+    btn.disabled = true;
+  });
+</script>
+</body>
+</html>
